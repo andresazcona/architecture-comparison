@@ -1,18 +1,19 @@
 {
   "name": "user-service",
   "version": "1.0.0",
-  "description": "User service for managing user accounts and authentication.",
+  "description": "Microservice for managing users",
   "main": "src/app.js",
   "scripts": {
-    "start": "node src/app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/app.js"
   },
   "dependencies": {
-    "express": "^4.17.1",
-    "mongoose": "^5.10.9",
     "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^8.5.1"
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.5.0"
   },
-  "author": "",
-  "license": "ISC"
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
 }
