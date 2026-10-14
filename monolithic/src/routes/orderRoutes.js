@@ -1,17 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
+const { verifyToken } = require('../middleware/auth');
 
-// Route to create a new order
+// All order routes require a token
+router.use(verifyToken);
+
 router.post('/', orderController.createOrder);
-
-// Route to get a specific order by ID
 router.get('/:id', orderController.getOrder);
-
-// Route to update an existing order
 router.put('/:id', orderController.updateOrder);
-
-// Route to get all orders
 router.get('/', orderController.getOrders);
 
 module.exports = router;

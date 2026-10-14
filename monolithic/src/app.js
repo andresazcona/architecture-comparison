@@ -3,33 +3,24 @@ const mongoose = require('mongoose');
 const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
-const authMiddleware = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ecommerce';
 
-// Middleware
 app.use(express.json());
-app.use(authMiddleware.verifyToken);
 
-// Routes
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 
-// Database connection
-mongoose.connect('mongodb://localhost:27017/yourdbname', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
-.then(() => {
-    console.log('Connected to the database');
-})
-.catch(err => {
-    console.error('Database connection error:', err);
-});
-
-// Start the server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+mongoose.connect(MONGO_URI)
+    .then(() => {
+        console.log('Connected to the database');
+        app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+    })
+    .catch(err => {
+        console.error('Database connection error:', err);
+        process.exit(1);
+    });

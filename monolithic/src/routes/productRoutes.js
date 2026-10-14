@@ -1,17 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
+const { verifyToken } = require('../middleware/auth');
 
-// Route to get all products
+// Reading the catalog is public; changing it requires a token
 router.get('/', productController.getProducts);
-
-// Route to add a new product
-router.post('/', productController.addProduct);
-
-// Route to update an existing product
-router.put('/:id', productController.updateProduct);
-
-// Route to delete a product
-router.delete('/:id', productController.deleteProduct);
+router.post('/', verifyToken, productController.addProduct);
+router.put('/:id', verifyToken, productController.updateProduct);
+router.delete('/:id', verifyToken, productController.deleteProduct);
 
 module.exports = router;
