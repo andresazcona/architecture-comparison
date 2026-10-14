@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  monolith:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+        working-directory: monolithic
+      - name: Start monolith
+        working-directory: monolithic
+        env:
+          MONGO_URI: mongodb://localhost:27017/ecommerce
+        run: |
+          node src/app.js > server.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:3000/health && break || sleep 1; done
+      - run: node tests/smoke.js http://localhost:3000
+      - name: Show server log on failure
+        if: failure()
+        run: cat monolithic/server.log
+
+  microservices:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install and start services
+        working-directory: microservices
+        run: |
+          for s in api-gateway user-service product-service order-service; do
+            (cd $s && npm install --no-audit --no-fund)
+          done
+          (cd user-service    && PORT=3001 MONGO_URI=mongodb://localhost:27017/users    node src/app.js > ../user.log 2>&1 &)
+          (cd product-service && PORT=3002 MONGO_URI=mongodb://localhost:27017/products node src/app.js > ../product.log 2>&1 &)
+          (cd order-service   && PORT=3003 MONGO_URI=mongodb://localhost:27017/orders   node src/app.js > ../order.log 2>&1 &)
+          (cd api-gateway && PORT=3000 \
+            USER_SERVICE_URL=http://localhost:3001 \
+            PRODUCT_SERVICE_URL=http://localhost:3002 \
+            ORDER_SERVICE_URL=http://localhost:3003 \
+            node src/app.js > ../gateway.log 2>&1 &)
+          for i in $(seq 1 30); do curl -sf http://localhost:3000/health && break || sleep 1; done
+          sleep 3
+      - run: node tests/smoke.js http://localhost:3000
+      - name: Show service logs on failure
+        if: failure()
+        run: tail -n 50 microservices/*.log
