@@ -25,18 +25,19 @@ export let options = {
   },
 };
 
-// Test data
-const testUser = {
-  email: `test${Date.now()}@example.com`,
-  password: 'password123',
-  name: 'Test User'
-};
-
 let authToken = null;
 let createdProductId = null;
 let createdOrderId = null;
 
 export default function() {
+  // Unique user per VU and iteration so registrations never collide
+  const unique = `${Date.now()}-${__VU}-${__ITER}`;
+  const testUser = {
+    username: `user${unique}`,
+    email: `test${unique}@example.com`,
+    password: 'password123',
+  };
+
   // User registration test
   const registerRes = http.post(`${BASE_URL}/api/users/register`, JSON.stringify(testUser), {
     headers: { 'Content-Type': 'application/json' },
@@ -106,10 +107,8 @@ export default function() {
     if (createdProductId) {
       // Create order test
       const orderRes = http.post(`${BASE_URL}/api/orders`, JSON.stringify({
-        products: [{
-          productId: createdProductId,
-          quantity: 1
-        }]
+        productId: createdProductId,
+        quantity: 1
       }), {
         headers: { 
           'Content-Type': 'application/json',
